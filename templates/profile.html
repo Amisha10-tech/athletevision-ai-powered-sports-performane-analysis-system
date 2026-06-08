@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="fade-in" style="max-width: 800px; margin: 0 auto;">
+
+    <!-- PROFILE HEADER -->
+    <div class="card" style="margin-bottom: 2rem; overflow: hidden; position: relative;">
+        <!-- Accent stripe -->
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-pink), var(--accent-gold));"></div>
+        
+        <div style="display: flex; align-items: center; gap: 2rem; padding-top: 1rem; flex-wrap: wrap;">
+            <!-- Avatar -->
+            <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink)); display: flex; align-items: center; justify-content: center; font-size: 2.8rem; box-shadow: 0 8px 32px rgba(0, 212, 255, 0.3); flex-shrink: 0;">
+                {{ user.username[0]|upper if user.username else '?' }}
+            </div>
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.25rem;">
+                    <h2 style="font-size: 1.8rem; font-weight: 800; margin: 0; color: var(--text-main);">{{ user.username }}</h2>
+                    {% if user.subscription_tier == 'Subscriber' %}
+                    <span style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-gold)); color: white; padding: 4px 12px; border-radius: 99px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);">👑 PREMIUM PRO</span>
+                    {% else %}
+                    <span style="background: #e2e8f0; color: #64748b; padding: 4px 12px; border-radius: 99px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">FREE TIER</span>
+                    {% endif %}
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">
+                    {{ user.current_level or 'Level not set' }} · {{ user.play_style or 'Play style not set' }}
+                </p>
+                {% if user.training_goal %}
+                <p style="color: var(--accent-cyan); font-size: 0.85rem; margin-top: 0.5rem; font-weight: 600;">
+                    🎯 Goal: {{ user.training_goal }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem;">
+        <div class="card" style="text-align: center; padding: 1.25rem 1rem;">
+            <p style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.25rem;">{{ total_sessions }}</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Sessions</p>
+        </div>
+        <div class="card" style="text-align: center; padding: 1.25rem 1rem;">
+            <p style="font-size: 2rem; font-weight: 800; color: #4ade80; margin-bottom: 0.25rem;">{{ "%.0f"|format(best_score) }}%</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Best Score</p>
+        </div>
+        <div class="card" style="text-align: center; padding: 1.25rem 1rem;">
+            <p style="font-size: 2rem; font-weight: 800; color: var(--accent-cyan); margin-bottom: 0.25rem;">{{ avg_similarity }}%</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Avg Match</p>
+        </div>
+        <div class="card" style="text-align: center; padding: 1.25rem 1rem;">
+            <p style="font-size: 2rem; font-weight: 800; color: var(--accent-gold); margin-bottom: 0.25rem;">{{ streak }}🔥</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Streak</p>
+        </div>
+    </div>
+
+    <!-- SUBSCRIPTION tier MANAGEMENT CARD -->
+    <div class="card" style="margin-bottom: 2rem; padding: 2rem; border: {% if user.subscription_tier == 'Subscriber' %}1px solid rgba(22, 163, 74, 0.35){% else %}1px solid rgba(0, 0, 0, 0.06){% endif %}; relative: overflow: hidden;">
+        {% if user.subscription_tier == 'Subscriber' %}
+        <!-- Subscriber Card -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+            <div>
+                <h3 style="color: var(--accent-cyan); font-weight: 800; font-size: 1.35rem; margin-bottom: 0.25rem;">👑 Subscriber Tier Active</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">You have unlocked the full suite of elite AI badminton biomechanics analysis, infinite history, and smash speed metrics.</p>
+            </div>
+            <span style="background: rgba(22, 163, 74, 0.08); border: 1px solid rgba(22, 163, 74, 0.25); color: var(--accent-cyan); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700;">PRO MEMBER</span>
+        </div>
+        {% else %}
+        <!-- Free Tier Card -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+            <div>
+                <h3 style="color: #64748b; font-weight: 800; font-size: 1.35rem; margin-bottom: 0.25rem;">Free Tier Active</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Unlock professional telemetry, custom YOLO trajectory, and the structured AI coaching advisor.</p>
+            </div>
+            <a href="{{ url_for('upgrade_plan') }}" class="btn animate-glow" style="border-radius: 50px; font-size: 0.9rem; padding: 0.75rem 1.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Upgrade to Pro</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- EDIT FORM -->
+    <div class="card" style="padding: 2.5rem;">
+        <h3 style="margin-bottom: 0.25rem; color: var(--text-main);">Edit Profile</h3>
+        <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Update your player details below.</p>
+        
+        <form method="POST" action="{{ url_for('profile') }}">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 600;">Display Name</label>
+                <input type="text" name="username" value="{{ user.username }}" placeholder="Enter your name" style="width: 100%; padding: 0.75rem; border-radius: 8px;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 600;">Play Style</label>
+                    <select name="play_style" style="width: 100%; padding: 0.75rem; border-radius: 8px;">
+                        <option value="" {% if not user.play_style %}selected{% endif %}>Select Play Style...</option>
+                        <option value="Aggressive Attacker" {% if user.play_style == "Aggressive Attacker" %}selected{% endif %}>Aggressive Attacker (Smash & Clear)</option>
+                        <option value="Defensive Retriever" {% if user.play_style == "Defensive Retriever" %}selected{% endif %}>Defensive Retriever (Stamina & Placement)</option>
+                        <option value="Counter Attacker" {% if user.play_style == "Counter Attacker" %}selected{% endif %}>Counter Attacker (Patience & Speed)</option>
+                        <option value="All-Rounder" {% if user.play_style == "All-Rounder" %}selected{% endif %}>All-Rounder</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 600;">Current Level</label>
+                    <select name="current_level" style="width: 100%; padding: 0.75rem; border-radius: 8px;">
+                        <option value="" {% if not user.current_level %}selected{% endif %}>Select Current Level...</option>
+                        <option value="Beginner" {% if user.current_level == "Beginner" %}selected{% endif %}>Beginner (Recreational)</option>
+                        <option value="Intermediate" {% if user.current_level == "Intermediate" %}selected{% endif %}>Intermediate (Club Level)</option>
+                        <option value="Advanced" {% if user.current_level == "Advanced" %}selected{% endif %}>Advanced (Local Tournaments)</option>
+                        <option value="Professional" {% if user.current_level == "Professional" %}selected{% endif %}>Professional / Elite</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 600;">Racket Model / String Tension</label>
+                <input type="text" name="racket_brand" value="{{ user.racket_brand or '' }}" placeholder="e.g., Yonex Astrox 99 Pro @ 26 lbs" style="width: 100%; padding: 0.75rem; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 600;">Primary Training Goal</label>
+                <input type="text" name="training_goal" value="{{ user.training_goal or '' }}" placeholder="e.g., Increase smash power, fix elbow drop" style="width: 100%; padding: 0.75rem; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: 600;">Additional Bio / Physical Stats</label>
+                <textarea name="bio" rows="3" placeholder="Height, Weight, injury history..." style="width: 100%; padding: 0.75rem; border-radius: 8px; resize: vertical;">{{ user.bio or '' }}</textarea>
+            </div>
+            
+            <button type="submit" class="btn" style="width: 100%; padding: 0.9rem; font-size: 1rem;">Save Profile</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
