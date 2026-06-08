@@ -1,0 +1,852 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+
+<div class="fade-in">
+    <!-- ═══════════ PERFORMANCE HUB HEADER ═══════════ -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1.5rem;">
+        <div>
+            <p style="color: #16a34a; font-weight: 700; font-size: 0.8rem; letter-spacing: 1.5px; text-transform: uppercase; margin: 0 0 0.25rem 0;">PERFORMANCE HUB</p>
+            <h1 style="font-size: 2.2rem; font-weight: 800; color: #1e293b; margin: 0 0 0.35rem 0; letter-spacing: -0.5px;">Dashboard</h1>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Track your badminton technique over time and analyze practice sessions</p>
+        </div>
+        <a href="#upload-section" class="btn" style="display: inline-flex; align-items: center; gap: 0.5rem; border-radius: 12px; background: #16a34a; padding: 0.75rem 1.5rem; font-size: 0.95rem; box-shadow: 0 4px 16px rgba(22, 163, 74, 0.2); font-weight: 700;">
+            <i data-lucide="plus" style="width: 16px; height: 16px;"></i> New Analysis
+        </a>
+    </div>
+
+    <!-- ═══════════ STATS STRIP ═══════════ -->
+    {% set ns = namespace(best_score=0) %}
+    {% for r in records %}
+      {% if r.status == 'completed' and r.performance_score and r.performance_score > ns.best_score %}
+        {% set ns.best_score = r.performance_score %}
+      {% endif %}
+    {% endfor %}
+    
+    <div class="stats-grid">
+        <!-- Card 1: Total Sessions -->
+        <div class="dashboard-premium-card">
+            <div>
+                <p style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 0.4rem 0;">Total Sessions</p>
+                <p style="font-weight: 800; font-size: 1.8rem; color: var(--text-main); margin: 0 0 0.25rem 0; line-height: 1;">{{ total_sessions }}</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0; font-weight: 500;">Practice videos</p>
+            </div>
+            <div class="stat-icon-wrapper icon-green"><i data-lucide="video" style="width: 20px; height: 20px;"></i></div>
+        </div>
+
+        <!-- Card 2: Average Accuracy (Progress Ring) -->
+        <div class="dashboard-premium-card">
+            <div>
+                <p style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 0.4rem 0;">Avg Learning Accuracy</p>
+                <p style="font-weight: 800; font-size: 1.8rem; color: var(--text-main); margin: 0 0 0.25rem 0; line-height: 1;">{{ "%.0f"|format(avg_similarity) }}%</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0; font-weight: 500;">overall rating</p>
+            </div>
+            <div class="progress-ring-container">
+                <svg class="progress-ring" width="64" height="64">
+                    <defs>
+                        <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#16a34a" />
+                            <stop offset="100%" stop-color="#0d9488" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-ring-circle-bg" cx="32" cy="32" r="26"></circle>
+                    <circle class="progress-ring-circle" id="avg-acc-circle" cx="32" cy="32" r="26" style="stroke-dashoffset: {{ 163.4 - (163.4 * avg_similarity / 100) }}px;"></circle>
+                </svg>
+                <span class="progress-ring-value" style="color: #16a34a;">{{ "%.0f"|format(avg_similarity) }}%</span>
+            </div>
+        </div>
+
+        <!-- Card 3: Best Score (Progress Ring) -->
+        <div class="dashboard-premium-card">
+            <div>
+                <p style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 0.4rem 0;">Best Score</p>
+                <p style="font-weight: 800; font-size: 1.8rem; color: var(--text-main); margin: 0 0 0.25rem 0; line-height: 1;">{{ "%.0f"|format(ns.best_score) }}%</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0; font-weight: 500;">personal best</p>
+            </div>
+            <div class="progress-ring-container">
+                <svg class="progress-ring" width="64" height="64">
+                    <circle class="progress-ring-circle-bg" cx="32" cy="32" r="26"></circle>
+                    <circle class="progress-ring-circle" id="best-score-circle" cx="32" cy="32" r="26" style="stroke: #0d9488; stroke-dashoffset: {{ 163.4 - (163.4 * ns.best_score / 100) }}px;"></circle>
+                </svg>
+                <span class="progress-ring-value" style="color: #0d9488;">{{ "%.0f"|format(ns.best_score) }}%</span>
+            </div>
+        </div>
+
+        <!-- Card 4: Day Streak -->
+        <div class="dashboard-premium-card">
+            <div>
+                <p style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 0.4rem 0;">Active Streak</p>
+                <p style="font-weight: 800; font-size: 1.8rem; color: var(--text-main); margin: 0 0 0.25rem 0; line-height: 1;">{{ streak }} Days</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0; font-weight: 500;">consecutive training</p>
+            </div>
+            <div class="stat-icon-wrapper icon-pink"><i data-lucide="flame" style="width: 20px; height: 20px;"></i></div>
+        </div>
+    </div>
+
+    <!-- ═══════════ UPLOAD SECTION ═══════════ -->
+    <div id="upload-section" class="card" style="margin-bottom: 1rem; padding: 2rem 2.5rem 1.75rem 2.5rem; border-radius: 24px; background: linear-gradient(135deg, #ffffff 60%, #f0fdf4 100%); border: 1.5px solid rgba(22, 163, 74, 0.15);">
+        <p style="color: #16a34a; font-weight: 700; font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 0.5rem; text-align: center;">BADMINTON PERFORMANCE LAB</p>
+        <h2 style="font-size: 1.85rem; font-weight: 800; color: #1e293b; text-align: center; margin-bottom: 0.6rem; letter-spacing: -0.5px;">Analyze practice video in one click</h2>
+        <p style="color: var(--text-muted); text-align: center; margin-bottom: 1.5rem; max-width: 700px; margin-left: auto; margin-right: auto; line-height: 1.55; font-size: 0.9rem;">Upload video footage and get instant shot scoring, biomechanical tracking, and playable best/worst moments.</p>
+        
+        <!-- MODE SELECTOR TOGGLE -->
+        <div style="display: flex; justify-content: center; gap: 0.6rem; margin-bottom: 1.75rem; background: rgba(22, 163, 74, 0.04); border-radius: 16px; padding: 0.4rem; max-width: 500px; margin-left: auto; margin-right: auto; border: 1px solid rgba(22, 163, 74, 0.12);">
+            <button type="button" id="modeBtn_single" onclick="setAnalysisMode('single')"
+                style="flex: 1; padding: 0.7rem 1.5rem; border: none; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.3s; background: #16a34a; color: white; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2); letter-spacing: 0.2px;">
+                🏸 Analyze My Form
+            </button>
+            <button type="button" id="modeBtn_match" onclick="setAnalysisMode('match')"
+                style="flex: 1; padding: 0.7rem 1.5rem; border: none; border-radius: 12px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.3s; background: transparent; color: var(--text-muted); letter-spacing: 0.2px;">
+                👥 Shadow Practice Reps
+            </button>
+        </div>
+
+        <!-- SLIDER CONTAINER (BOTH IN ONE FRAME) -->
+        <div id="upload-slider-frame" style="position: relative; overflow: hidden; max-width: 580px; margin: 0 auto 1.25rem auto; width: 100%; border-radius: 20px; border: 1.5px solid rgba(22, 163, 74, 0.15); background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(22, 163, 74, 0.03);">
+            
+            <!-- Left Arrow (<) -->
+            <button type="button" id="slider-prev-btn" onclick="prevUploadPage()" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; background: rgba(255,255,255,0.9); border: 1px solid rgba(15, 23, 42, 0.08); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.06); color: #1e293b; transition: all 0.2s; opacity: 0; pointer-events: none;">
+                <i data-lucide="chevron-left" style="width: 18px; height: 18px;"></i>
+            </button>
+            
+            <!-- Right Arrow (>) -->
+            <button type="button" id="slider-next-btn" onclick="nextUploadPage()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); z-index: 10; cursor: pointer; background: rgba(255,255,255,0.9); border: 1px solid rgba(15, 23, 42, 0.08); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.06); color: #1e293b; transition: all 0.2s;">
+                <i data-lucide="chevron-right" style="width: 18px; height: 18px;"></i>
+            </button>
+
+            <!-- Slider Wrapper -->
+            <div id="slider-wrapper" style="display: flex; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); width: 200%;">
+                
+                <!-- Page 1: File Upload Form -->
+                <div style="width: 50%; flex-shrink: 0; padding: 0.85rem 1.5rem 1.25rem 1.5rem; display: flex; flex-direction: column;">
+                    <form action="{{ url_for('upload_video') }}" method="POST" enctype="multipart/form-data" id="uploadForm" style="display: flex; flex-direction: column; width: 100%;">
+                        <input type="hidden" name="analysis_mode" id="analysis_mode_input" value="single">
+                        <input type="hidden" name="player_coords" id="player_coords_input">
+
+                        <div class="upload-area" id="drop-zone" onclick="document.getElementById('file-input').click()" style="display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1.25rem; border: 2px dashed rgba(22, 163, 74, 0.25); background: rgba(22, 163, 74, 0.01); min-height: 150px; border-radius: 16px; transition: all 0.3s; cursor: pointer;">
+                            <div id="upload-prompt-view" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                                <i data-lucide="upload-cloud" style="width: 38px; height: 38px; stroke: #16a34a; margin-bottom: 0.5rem;"></i>
+                                <p id="uploadLabel" style="color: var(--text-main); font-weight: 700; font-size: 0.92rem; margin-bottom: 0.2rem;">Click or drag your video to upload</p>
+                                <p style="color: var(--text-muted); font-size: 0.72rem; margin: 0; font-weight: 500;">Supports MP4, MOV, WEBM</p>
+                            </div>
+
+                            <div id="upload-selected-view" style="display: none; align-items: center; gap: 0.5rem; background: #ffffff; padding: 0.5rem 1rem; border-radius: 99px; border: 1px solid rgba(22, 163, 74, 0.15); box-shadow: 0 4px 12px rgba(0,0,0,0.03); max-width: 95%;">
+                                <span style="font-size: 1.1rem; color: #16a34a;"><i data-lucide="video" style="width: 18px; height: 18px;"></i></span>
+                                <div style="text-align: left; overflow: hidden;">
+                                    <p id="selected-file-name" style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;"></p>
+                                    <p id="selected-file-size" style="font-size: 0.72rem; color: var(--text-muted); margin: 0;"></p>
+                                </div>
+                                <button type="button" onclick="discardSelectedFile(event)" style="background: none; border: none; font-size: 1.1rem; color: #94a3b8; cursor: pointer; padding: 0 0.25rem; transition: color 0.2s; font-weight: bold; line-height: 1;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">×</button>
+                            </div>
+                            
+                            <input type="file" name="videoFile" id="file-input" accept="video/*" style="display: none;" onchange="handleFileSelection(this)">
+                        </div>
+                        <button type="submit" id="start-analysis-btn" class="btn" style="display: none; width: 100%; margin-top: 0.75rem; padding: 0.6rem; border-radius: 10px; font-weight: 700; background: #16a34a; font-size: 0.9rem; box-shadow: 0 4px 16px rgba(22, 163, 74, 0.25);">
+                            🚀 START AI ANALYSIS
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Page 2: Live Camera -->
+                <div style="width: 50%; flex-shrink: 0; padding: 0.85rem 1.5rem 1.25rem 1.5rem; display: flex; flex-direction: column; justify-content: center;">
+                    <div class="upload-area" id="live-cam-zone" style="background: rgba(167, 139, 250, 0.01); border: 2px dashed rgba(167, 139, 250, 0.25); border-radius: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 1rem; margin: 0; min-height: 150px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.background='rgba(167, 139, 250, 0.03)';" onmouseout="this.style.background='rgba(167, 139, 250, 0.01)';">
+                        <div id="cam-ui-initial" style="text-align: center;">
+                            <i data-lucide="video" style="width: 38px; height: 38px; color: #8b5cf6; margin-bottom: 0.5rem; display: block; margin-left: auto; margin-right: auto;"></i>
+                            <p style="color: var(--text-main); font-weight: 700; font-size: 0.92rem; margin-bottom: 0.2rem;">Live Web Camera</p>
+                            <p style="color: var(--text-muted); font-size: 0.72rem; margin-bottom: 0.75rem; font-weight: 500;">Record a short video instantly.</p>
+                            <button type="button" class="btn" style="background: #8b5cf6; padding: 0.45rem 1rem; font-size: 0.8rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(167, 139, 250, 0.25);" onclick="startCamera()">Enable Camera</button>
+                        </div>
+                        
+                        <div id="cam-ui-recording" style="display: none; position: relative; width: 100%;">
+                            <video id="liveVideo" autoplay muted playsinline style="max-height: 140px; width: 100%; border-radius: 12px; border: 1px solid #8b5cf6; background: #000; display: block; margin: 0 auto; object-fit: contain;"></video>
+                            <canvas id="output_canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 12px; pointer-events: none; z-index: 5;"></canvas>
+                            <div id="countdownOverlay" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; font-weight: 800; color: white; text-shadow: 0 0 20px #8b5cf6; display: none; z-index: 10;">5</div>
+                            <div id="recordingIndicator" style="display: none; position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.9); padding: 2px 8px; border-radius: 6px; color: white; font-weight: bold; font-size: 0.7rem; animation: pulse 1s infinite; z-index: 10;">🔴 REC</div>
+                            
+                            <button type="button" class="btn" id="recordBtn" onclick="startCountdown()" style="margin-top: 0.5rem; padding: 0.45rem; font-size: 0.8rem; width: 100%; background: #8b5cf6;">🔴 Start Timer (5s)</button>
+                            <button type="button" class="btn" id="stopRecordBtn" onclick="stopRecording()" style="margin-top: 0.5rem; padding: 0.45rem; font-size: 0.8rem; width: 100%; display: none; background: linear-gradient(135deg, #ef4444, #b91c1c);">⏹️ Stop Recording</button>
+                        </div>
+                        
+                        <div id="cam-ui-review" style="display: none; width: 100%; text-align: center;">
+                            <h3 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-main);">Review Shot</h3>
+                            <video id="reviewVideo" controls playsinline style="max-height: 140px; width: 100%; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 0.5rem; background: #000; display: block; margin: 0 auto; object-fit: contain;"></video>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                                <button type="button" class="btn" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 0.45rem; font-size: 0.8rem;" onclick="discardRecording()">🗑️ Discard</button>
+                                <button type="button" class="btn animate-glow" style="background: #16a34a; padding: 0.45rem; font-size: 0.8rem;" onclick="uploadRecording()">🚀 Analyze</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Indicator Dots -->
+            <div style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 10;">
+                <div id="slider-dot-0" onclick="goToUploadPage(0)" style="width: 7px; height: 7px; border-radius: 50%; background: #16a34a; cursor: pointer; transition: all 0.3s;"></div>
+                <div id="slider-dot-1" onclick="goToUploadPage(1)" style="width: 7px; height: 7px; border-radius: 50%; background: #e2e8f0; cursor: pointer; transition: all 0.3s;"></div>
+            </div>
+        </div>
+
+        <!-- SINGLE COMBINED CARD: INSIGHTS & GUIDE -->
+        <div class="card" style="background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(8px); border: 1px solid rgba(22, 163, 74, 0.1); padding: 1rem 1.5rem; border-radius: 16px; box-shadow: none; margin-bottom: 0rem;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+                
+                <!-- Column 1: Fast Insights -->
+                <div>
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-top: 0; margin-bottom: 0.5rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i data-lucide="info" style="width: 16px; height: 16px; color: #16a34a;"></i> Fast insights
+                    </h4>
+                    <p style="color: var(--text-muted); font-size: 0.78rem; line-height: 1.4; margin-bottom: 0.75rem; font-weight: 500;">
+                        The app processes pose data and wrist impact frames to identify and score your key shots.
+                    </p>
+                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.78rem; color: #334155; font-weight: 600;">
+                        <li style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="check" style="width: 14px; height: 14px; color: #16a34a;"></i> Real-time progress updates
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="check" style="width: 14px; height: 14px; color: #16a34a;"></i> Best and worst shot preview videos
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="check" style="width: 14px; height: 14px; color: #16a34a;"></i> Personalized practice recommendations
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Column 2: Upload Guide -->
+                <div>
+                    <h4 style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-top: 0; margin-bottom: 0.5rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i data-lucide="help-circle" style="width: 16px; height: 16px; color: #16a34a;"></i> Upload guide
+                    </h4>
+                    <p style="color: var(--text-muted); font-size: 0.78rem; line-height: 1.4; margin-bottom: 0.75rem; font-weight: 500;">
+                        Use 1-2 minute practice clips with clear court view. Longer videos are downsampled to speed up analysis.
+                    </p>
+                    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.78rem; color: #334155; font-weight: 600;">
+                        <li style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="file-video" style="width: 14px; height: 14px; color: #64748b;"></i> MP4, MOV, or WebM only
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="hard-drive" style="width: 14px; height: 14px; color: #64748b;"></i> Max 100MB
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 0.4rem;">
+                            <i data-lucide="clock" style="width: 14px; height: 14px; color: #64748b;"></i> Recommended length: 5s - 1min
+                        </li>
+                    </ul>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ ANALYTICS ROW ═══════════ -->
+    <div class="dashboard-grid" style="margin-bottom: 3rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1rem;">
+        <!-- WEEKLY PRACTICE PLAN -->
+        <div class="dashboard-analytics-card" style="margin-bottom: 0; display: flex; flex-direction: column; gap: 0.65rem; padding: 1rem 1.15rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid rgba(15, 23, 42, 0.05); padding-bottom: 0.4rem; margin-bottom: 0px;">
+                <h3 style="margin: 0; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 1.05rem; font-weight: 800; color: #1e293b;">
+                    <span style="font-size: 1.1rem;">📅</span> Weekly Practice Plan
+                </h3>
+                <span id="practice-plan-badge" style="font-weight: 800; font-size: 0.65rem; padding: 3px 10px; border-radius: 99px; letter-spacing: 0.5px; text-transform: uppercase; transition: all 0.2s;">
+                    0/5 Done
+                </span>
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.72rem; margin: 0; line-height: 1.35; font-weight: 500;">
+                Follow this weekly program to build muscle memory and improve posture scores.
+            </p>
+ 
+            <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+                <!-- Day 1 -->
+                <div id="practice-day-1" onclick="togglePracticeDay(1)" style="display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.45rem 0.75rem; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.01); cursor: pointer; transition: all 0.2s;">
+                    <div id="check-icon-1" style="display: flex; align-items: center; justify-content: center; border-radius: 5px; width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; transition: all 0.2s;"></div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0px;">
+                            <span style="font-weight: 800; color: #1e293b; font-size: 0.8rem;">Day 1: Stance & Agility</span>
+                            <span style="color: #64748b; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">20 Mins</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.7rem; color: #64748b; line-height: 1.3; font-weight: 500;">Practice basic shadow movements and low-ready court positioning drills.</p>
+                    </div>
+                </div>
+ 
+                <!-- Day 2 -->
+                <div id="practice-day-2" onclick="togglePracticeDay(2)" style="display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.45rem 0.75rem; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.01); cursor: pointer; transition: all 0.2s;">
+                    <div id="check-icon-2" style="display: flex; align-items: center; justify-content: center; border-radius: 5px; width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; transition: all 0.2s;"></div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0px;">
+                            <span style="font-weight: 800; color: #1e293b; font-size: 0.8rem;">Day 2: Overhead Clears</span>
+                            <span style="color: #64748b; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">30 Mins</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.7rem; color: #64748b; line-height: 1.3; font-weight: 500;">Focus on full shoulder rotation and 90-120° elbow extensions at hitting frame.</p>
+                    </div>
+                </div>
+ 
+                <!-- Day 3 -->
+                <div id="practice-day-3" onclick="togglePracticeDay(3)" style="display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.45rem 0.75rem; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.01); cursor: pointer; transition: all 0.2s;">
+                    <div id="check-icon-3" style="display: flex; align-items: center; justify-content: center; border-radius: 5px; width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; transition: all 0.2s;"></div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0px;">
+                            <span style="font-weight: 800; color: #1e293b; font-size: 0.8rem;">Day 3: Smash Technique</span>
+                            <span style="color: #64748b; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">25 Mins</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.7rem; color: #64748b; line-height: 1.3; font-weight: 500;">Practice core pivot rotation and fast wrist snap actions for velocity.</p>
+                    </div>
+                </div>
+ 
+                <!-- Day 4 -->
+                <div id="practice-day-4" onclick="togglePracticeDay(4)" style="display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.45rem 0.75rem; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.01); cursor: pointer; transition: all 0.2s;">
+                    <div id="check-icon-4" style="display: flex; align-items: center; justify-content: center; border-radius: 5px; width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; transition: all 0.2s;"></div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0px;">
+                            <span style="font-weight: 800; color: #1e293b; font-size: 0.8rem;">Day 4: Net Play & Drops</span>
+                            <span style="color: #64748b; font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">20 Mins</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.7rem; color: #64748b; line-height: 1.3; font-weight: 500;">Work on soft touch net drops and tight wrist control at the tape.</p>
+                    </div>
+                </div>
+ 
+                <!-- Day 5 -->
+                <div id="practice-day-5" onclick="togglePracticeDay(5)" style="display: flex; gap: 0.65rem; align-items: flex-start; padding: 0.45rem 0.75rem; border: 1px solid rgba(15, 23, 42, 0.08); border-radius: 12px; background: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.01); cursor: pointer; transition: all 0.2s;">
+                    <div id="check-icon-5" style="display: flex; align-items: center; justify-content: center; border-radius: 5px; width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; transition: all 0.2s;"></div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0px;">
+                            <span style="font-weight: 800; color: #1e293b; font-size: 0.8rem;">Day 5: Simulation & Footwork</span>
+                            <span style="color: #64748b; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">35 Mins</span>
+                        </div>
+                        <p style="margin: 0; font-size: 0.7rem; color: #64748b; line-height: 1.3; font-weight: 500;">Combine shadow play with full-court movement drills and high-intensity intervals.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- TECHNIQUE PROGRESS CHART -->
+        <div class="dashboard-analytics-card" style="margin-bottom: 0; display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem 1.15rem;">
+            <h3 style="margin-bottom: 0.15rem; display: inline-flex; align-items: center; gap: 0.4rem; font-size: 1.05rem; font-weight: 800; color: #1e293b;">
+                <i data-lucide="trending-up" style="width: 18px; height: 18px; color: #16a34a;"></i>
+                Technique Progress Chart 
+                <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-muted);">(Learning accuracy)</span>
+            </h3>
+            <div style="width: 100%; height: 245px;">
+                <canvas id="similarityChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ═══════ UPLOAD VALIDATION & DRAG-AND-DROP ═══════
+    function handleFileSelection(input) {
+        if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const name = file.name.toLowerCase();
+            const ext = name.split('.').pop();
+            const allowed = ['mp4', 'avi', 'mov', 'mkv', 'webm'];
+            
+            if (!allowed.includes(ext)) {
+                alert('Invalid file type. Please upload MP4, AVI, MOV, MKV, or WebM.');
+                input.value = '';
+                return;
+            }
+            
+            const maxSize = 100 * 1024 * 1024; // 100 MB
+            if (file.size > maxSize) {
+                alert('File is too large! Maximum allowed size is 100 MB.');
+                input.value = '';
+                return;
+            }
+
+            // Show selected view pill
+            const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+            document.getElementById('selected-file-name').innerText = file.name;
+            document.getElementById('selected-file-size').innerText = `${sizeMb} MB`;
+            
+            document.getElementById('upload-prompt-view').style.display = 'none';
+            document.getElementById('upload-selected-view').style.display = 'flex';
+            document.getElementById('start-analysis-btn').style.display = 'block';
+        }
+    }
+
+    function discardSelectedFile(e) {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        const fileInput = document.getElementById('file-input');
+        fileInput.value = '';
+        
+        document.getElementById('upload-prompt-view').style.display = 'flex';
+        document.getElementById('upload-selected-view').style.display = 'none';
+        document.getElementById('start-analysis-btn').style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        
+        if (dropZone && fileInput) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = '#16a34a';
+                    dropZone.style.background = 'rgba(22, 163, 74, 0.08)';
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.style.borderColor = 'rgba(22, 163, 74, 0.25)';
+                    dropZone.style.background = 'rgba(22, 163, 74, 0.02)';
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', e => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelection(fileInput);
+                }
+            }, false);
+        }
+    });
+
+    // AUTO-REFRESH: Simple and bulletproof
+    // Only reloads if a processing item exists on the page
+    (function() {
+        var working = document.querySelector('[data-status="still-working"]');
+        if (working) {
+            // First check after 8 seconds, then every 6 seconds
+            setTimeout(function() { window.location.reload(); }, 8000);
+        }
+    })();
+
+    // ═══════ ANALYSIS MODE TOGGLE ═══════
+    function setAnalysisMode(mode) {
+        document.getElementById('analysis_mode_input').value = mode;
+        
+        const singleBtn = document.getElementById('modeBtn_single');
+        const matchBtn = document.getElementById('modeBtn_match');
+        const uploadLabel = document.getElementById('uploadLabel');
+        
+        if (mode === 'match') {
+            matchBtn.style.background = '#16a34a';
+            matchBtn.style.color = 'white';
+            matchBtn.style.boxShadow = '0 4px 12px rgba(22, 163, 74, 0.25)';
+            singleBtn.style.background = 'transparent';
+            singleBtn.style.color = 'var(--text-muted)';
+            singleBtn.style.boxShadow = 'none';
+            if (uploadLabel) uploadLabel.textContent = 'Click or drag shadow practice video to upload';
+        } else {
+            singleBtn.style.background = '#16a34a';
+            singleBtn.style.color = 'white';
+            singleBtn.style.boxShadow = '0 4px 12px rgba(22, 163, 74, 0.25)';
+            matchBtn.style.background = 'transparent';
+            matchBtn.style.color = 'var(--text-muted)';
+            matchBtn.style.boxShadow = 'none';
+            if (uploadLabel) uploadLabel.textContent = 'Click or drag your video to upload';
+        }
+    }
+
+    // ═══════ SIMILARITY TREND CHART (PRIMARY) ═══════
+    // Build similarity data from records
+    const simLabels = {{ chart_labels | tojson | safe }};
+    const perfScores = {{ chart_data | tojson | safe }};
+    const simScores = {{ chart_sim_data | tojson | safe }};
+
+    const simCtx = document.getElementById('similarityChart').getContext('2d');
+    new Chart(simCtx, {
+        type: 'line',
+        data: {
+            labels: simLabels,
+            datasets: [
+                {
+                    label: 'Technique Learning Accuracy %',
+                    data: simScores,
+                    borderColor: '#16a34a',
+                    backgroundColor: 'rgba(22, 163, 74, 0.08)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#16a34a',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                },
+                {
+                    label: 'Performance %',
+                    data: perfScores,
+                    borderColor: 'rgba(22, 163, 74, 0.6)',
+                    backgroundColor: 'rgba(22, 163, 74, 0.02)',
+                    borderWidth: 2.5,
+                    fill: false,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(22, 163, 74, 0.8)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    borderDash: [5, 3],
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: { color: 'rgba(0, 0, 0, 0.06)' },
+                    ticks: { color: '#64748b' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#64748b' }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        color: '#1e293b',
+                        usePointStyle: true,
+                        padding: 16,
+                        font: { size: 12, weight: '600' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    titleColor: '#1e293b',
+                    bodyColor: '#475569',
+                    borderColor: 'rgba(22, 163, 74, 0.15)',
+                    borderWidth: 1,
+                    titleFont: { size: 13, weight: '700' },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 10,
+                }
+            }
+        }
+    });
+
+
+
+    // ═══════ LIVE WEBCAM RECORDING + AI MIRROR ═══════
+    let mediaRecorder;
+    let recordedChunks = [];
+    let stream;
+    let poseAI;
+    let isCameraActive = false;
+    
+    // Initialize MediaPipe Pose 
+    function initMediaPipe() {
+        const videoElement = document.getElementById('liveVideo');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        
+        poseAI = new window.Pose({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        }});
+        
+        poseAI.setOptions({
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        
+        poseAI.onResults(function(results) {
+            // Resize canvas to exactly overlay the video dynamically
+            if(canvasElement.width !== videoElement.videoWidth) {
+                canvasElement.width = videoElement.videoWidth;
+                canvasElement.height = videoElement.videoHeight;
+            }
+            
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            if (results.poseLandmarks) {
+                window.drawConnectors(canvasCtx, results.poseLandmarks, window.POSE_CONNECTIONS,
+                               {color: '#f472b6', lineWidth: 4});
+                window.drawLandmarks(canvasCtx, results.poseLandmarks,
+                              {color: '#00d4ff', lineWidth: 2, radius: 4});
+            }
+            canvasCtx.restore();
+        });
+    }
+
+    async function feedAILoop() {
+        const videoElement = document.getElementById('liveVideo');
+        if(isCameraActive && videoElement.readyState >= 2) {
+            await poseAI.send({image: videoElement});
+        }
+        if(isCameraActive) {
+            requestAnimationFrame(feedAILoop);
+        }
+    }
+    
+    async function startCamera() {
+        try {
+            document.getElementById('cam-ui-initial').innerHTML = '<div style="padding:1rem;"><h3 style="color: var(--accent-cyan);">Loading AI Mirror... ⚙️</h3></div>';
+            
+            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            const videoElement = document.getElementById('liveVideo');
+            videoElement.srcObject = stream;
+            
+            document.getElementById('cam-ui-initial').style.display = 'none';
+            document.getElementById('cam-ui-recording').style.display = 'block';
+            document.getElementById('recordBtn').style.display = 'block';
+            document.getElementById('stopRecordBtn').style.display = 'none';
+            
+            initMediaPipe();
+            isCameraActive = true;
+            
+            videoElement.onloadeddata = () => {
+                feedAILoop();
+            };
+        } catch (err) {
+            alert('Error accessing camera. Please ensure permissions are granted: ' + err.message);
+        }
+    }
+    
+    function startCountdown() {
+        document.getElementById('recordBtn').style.display = 'none';
+        const overlay = document.getElementById('countdownOverlay');
+        overlay.style.display = 'block';
+        
+        let timeLeft = 5;
+        overlay.innerText = timeLeft;
+        
+        // Disable page scroll and interaction optionally
+        
+        const timer = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                overlay.innerText = timeLeft;
+            } else {
+                clearInterval(timer);
+                overlay.style.display = 'none';
+                startRecording();
+            }
+        }, 1000);
+    }
+    
+    function startRecording() {
+        document.getElementById('recordingIndicator').style.display = 'block';
+        document.getElementById('recordBtn').style.display = 'none';
+        document.getElementById('stopRecordBtn').style.display = 'block';
+        recordedChunks = [];
+        
+        // Try webm or mp4
+        let mimeType = 'video/webm';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'video/mp4';
+        }
+        
+        mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+        
+        mediaRecorder.ondataavailable = function(e) {
+            if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+        
+        mediaRecorder.onstop = function() {
+            document.getElementById('recordingIndicator').style.display = 'none';
+            
+            // Stop camera tracks and AI loop
+            isCameraActive = false;
+            if(stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            if(poseAI) {
+                poseAI.close();
+            }
+            document.getElementById('output_canvas').style.display = 'none';
+            
+            // Switch UI to Review Mode
+            document.getElementById('cam-ui-recording').style.display = 'none';
+            document.getElementById('cam-ui-review').style.display = 'block';
+            
+            const blob = new Blob(recordedChunks, { type: mimeType });
+            const reviewVideo = document.getElementById('reviewVideo');
+            reviewVideo.src = URL.createObjectURL(blob);
+        };
+        
+        mediaRecorder.start();
+    }
+    
+    function stopRecording() {
+        if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
+    }
+    
+    function discardRecording() {
+        recordedChunks = [];
+        // Reset UI back to beginning
+        document.getElementById('cam-ui-review').style.display = 'none';
+        document.getElementById('cam-ui-initial').style.display = 'block';
+        // Re-initialize buttons for next time
+        document.getElementById('cam-ui-initial').innerHTML = `
+            <svg width="50" height="50" fill="none" stroke="var(--accent-pink)" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin-bottom: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <p style="color: var(--text-main); font-weight: 500; font-size: 1.1rem; margin-bottom: 0.25rem;">Live Web Camera</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Record a short video instantly.</p>
+            <button type="button" class="btn btn-pink" onclick="startCamera()" style="padding: 0.6rem 2rem; font-size: 1rem;">Enable Camera</button>
+        `;
+        document.getElementById('output_canvas').style.display = 'block'; // reset canvas state
+    }
+    
+    function uploadRecording() {
+        document.getElementById('cam-ui-review').innerHTML = '<div style="padding:2rem;"><h3 style="color: var(--accent-cyan);"><span style="animation: spin 2s linear infinite; display: inline-block;">⚙️</span> Processing AI...</h3><p style="color:var(--text-muted); font-size:0.9rem;">Do not refresh the page.</p></div>';
+        
+        let mimeType = 'video/webm';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'video/mp4';
+        }
+
+        const blob = new Blob(recordedChunks, { type: mimeType });
+        
+        // Convert Blob to File
+        const ext = mimeType.includes('mp4') ? '.mp4' : '.webm';
+        const file = new File([blob], "live_recording" + ext, { type: mimeType });
+        
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        
+        const fileInput = document.getElementById('file-input');
+        fileInput.files = dataTransfer.files;
+        
+        // Submit the form programmatically
+        document.getElementById('uploadForm').submit();
+    }
+
+    // ═══════ WEEKLY PRACTICE PLAN DYNAMIC CHECKLIST ═══════
+    window.togglePracticeDay = function(dayNum) {
+        const key = 'practice_day_' + dayNum;
+        const isCompleted = localStorage.getItem(key) === 'true';
+        const newState = !isCompleted;
+        localStorage.setItem(key, newState ? 'true' : 'false');
+        
+        updatePracticeDayUI(dayNum, newState);
+        updatePracticePlanBadge();
+    };
+
+    function updatePracticeDayUI(dayNum, isCompleted) {
+        const row = document.getElementById('practice-day-' + dayNum);
+        const checkIcon = document.getElementById('check-icon-' + dayNum);
+        if (!row || !checkIcon) return;
+        
+        if (isCompleted) {
+            checkIcon.style.background = '#16a34a';
+            checkIcon.style.border = 'none';
+            checkIcon.innerHTML = '<i data-lucide="check" style="width: 10px; height: 10px; stroke-width: 3; color: white;"></i>';
+            row.style.borderColor = 'rgba(22, 163, 74, 0.15)';
+        } else {
+            checkIcon.style.background = 'transparent';
+            checkIcon.style.border = '1.5px solid #cbd5e1';
+            checkIcon.innerHTML = '';
+            row.style.borderColor = 'rgba(15, 23, 42, 0.08)';
+        }
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function updatePracticePlanBadge() {
+        let completedCount = 0;
+        for (let i = 1; i <= 5; i++) {
+            if (localStorage.getItem('practice_day_' + i) === 'true') {
+                completedCount++;
+            }
+        }
+        
+        const badge = document.getElementById('practice-plan-badge');
+        if (badge) {
+            badge.innerText = completedCount + '/5 Done';
+            if (completedCount === 5) {
+                badge.style.background = '#dcfce7';
+                badge.style.color = '#16a34a';
+            } else if (completedCount > 0) {
+                badge.style.background = 'rgba(22, 163, 74, 0.08)';
+                badge.style.color = '#16a34a';
+            } else {
+                badge.style.background = '#f1f5f9';
+                badge.style.color = '#64748b';
+            }
+        }
+    }
+
+    // ═══════ UPLOAD SECTION SLIDER ═══════
+    let currentUploadPage = 0;
+    
+    window.goToUploadPage = function(pageIndex) {
+        currentUploadPage = pageIndex;
+        const wrapper = document.getElementById('slider-wrapper');
+        const prevBtn = document.getElementById('slider-prev-btn');
+        const nextBtn = document.getElementById('slider-next-btn');
+        const dot0 = document.getElementById('slider-dot-0');
+        const dot1 = document.getElementById('slider-dot-1');
+        
+        if (wrapper) {
+            wrapper.style.transform = `translateX(-${pageIndex * 50}%)`;
+        }
+        
+        // Show/hide arrows based on page
+        if (prevBtn && nextBtn) {
+            if (pageIndex === 0) {
+                prevBtn.style.opacity = '0';
+                prevBtn.style.pointerEvents = 'none';
+                nextBtn.style.opacity = '1';
+                nextBtn.style.pointerEvents = 'auto';
+            } else {
+                prevBtn.style.opacity = '1';
+                prevBtn.style.pointerEvents = 'auto';
+                nextBtn.style.opacity = '0';
+                nextBtn.style.pointerEvents = 'none';
+            }
+        }
+        
+        // Update dots
+        if (dot0 && dot1) {
+            if (pageIndex === 0) {
+                dot0.style.background = '#16a34a';
+                dot1.style.background = '#e2e8f0';
+            } else {
+                dot0.style.background = '#e2e8f0';
+                dot1.style.background = '#8b5cf6'; // camera theme color is purple!
+            }
+        }
+    };
+    
+    window.prevUploadPage = function() {
+        if (currentUploadPage > 0) {
+            goToUploadPage(currentUploadPage - 1);
+        }
+    };
+    
+    window.nextUploadPage = function() {
+        if (currentUploadPage < 1) {
+            goToUploadPage(currentUploadPage + 1);
+        }
+    };
+
+    // Initialize practice day checkboxes on DOM load
+    document.addEventListener('DOMContentLoaded', () => {
+        for (let i = 1; i <= 5; i++) {
+            const isCompleted = localStorage.getItem('practice_day_' + i) === 'true';
+            updatePracticeDayUI(i, isCompleted);
+        }
+        updatePracticePlanBadge();
+    });
+</script>
+<!-- MediaPipe Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+
+{% endblock %}
