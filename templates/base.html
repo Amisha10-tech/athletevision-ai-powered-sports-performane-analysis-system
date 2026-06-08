@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athlete Vision</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .nav-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: var(--accent-cyan);
+        }
+        
+        /* Hide volume and mute buttons from native video controls to solve speaker icon issue */
+        video::-webkit-media-controls-mute-button,
+        video::-webkit-media-controls-volume-slider,
+        video::-webkit-media-controls-volume-slider-container,
+        video::-webkit-media-controls-volume-control-container,
+        video::-webkit-media-controls-volume-control-hover-background {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="app-layout">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                </svg>
+                <div>
+                    <h3>Athlete Vision</h3>
+                    <p>AI MOTION LAB</p>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.path == url_for('dashboard') %}active{% endif %}">
+                    <span class="icon">📊</span>
+                    <div class="nav-item-text">
+                        <span class="title">Dashboard</span>
+                        <span class="desc">Overview & stats</span>
+                    </div>
+                </a>
+                <a href="{{ url_for('dashboard') }}#upload-section" class="nav-item">
+                    <span class="icon">📤</span>
+                    <div class="nav-item-text">
+                        <span class="title">Analyze Video</span>
+                        <span class="desc">Upload & analyze</span>
+                    </div>
+                </a>
+                <a href="{{ url_for('progress') }}" class="nav-item {% if request.path == url_for('progress') %}active{% endif %}">
+                    <span class="icon">📈</span>
+                    <div class="nav-item-text">
+                        <span class="title">Progress Tracker</span>
+                        <span class="desc">Improvement over time</span>
+                    </div>
+                </a>
+                <a href="{{ url_for('history') }}" class="nav-item {% if request.path == url_for('history') %}active{% endif %}">
+                    <span class="icon">📜</span>
+                    <div class="nav-item-text">
+                        <span class="title">History</span>
+                        <span class="desc">Past sessions</span>
+                    </div>
+                </a>
+                <a href="{{ url_for('learning_center') }}" class="nav-item {% if request.path == url_for('learning_center') %}active{% endif %}">
+                    <span class="icon">🏸</span>
+                    <div class="nav-item-text">
+                        <span class="title">Learning Center</span>
+                        <span class="desc">Coaching drills</span>
+                    </div>
+                </a>
+                <a href="{{ url_for('leaderboard') }}" class="nav-item {% if request.path == url_for('leaderboard') %}active{% endif %}">
+                    <span class="icon">🏆</span>
+                    <div class="nav-item-text">
+                        <span class="title">Leaderboard</span>
+                        <span class="desc">Athlete standings</span>
+                    </div>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="{{ url_for('dashboard') }}#live-cam-zone" class="quick-analyze-badge">
+                    <span class="lightning-icon">⚡</span>
+                    <div class="badge-text">
+                        <span class="badge-title">Quick Analyze</span>
+                        <span class="badge-desc">Upload a video for instant feedback</span>
+                    </div>
+                </a>
+                <a href="{{ url_for('profile') }}" class="profile-link" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <span>👤 My Profile</span>
+                    {% if current_user.subscription_tier == 'Subscriber' %}
+                    <span style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-gold)); color: white; padding: 2px 8px; border-radius: 99px; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">👑 PRO</span>
+                    {% else %}
+                    <span style="background: #e2e8f0; color: #64748b; padding: 2px 8px; border-radius: 99px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">FREE</span>
+                    {% endif %}
+                </a>
+                {% if current_user.subscription_tier != 'Subscriber' %}
+                <a href="{{ url_for('upgrade_plan') }}" class="nav-item animate-pulse" style="background: rgba(22, 163, 74, 0.05); border: 1px dashed rgba(22, 163, 74, 0.3); color: var(--accent-cyan); text-align: center; justify-content: center; font-weight: 800; padding: 0.75rem 1rem; border-radius: 12px; text-decoration: none; margin-bottom: 0.5rem; display: flex; font-size: 0.8rem; letter-spacing: 0.5px;">
+                    👑 UPGRADE TO PRO
+                </a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="logout-link">🚪 Logout</a>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div class="main-content">
+    {% else %}
+    <header>
+        <a href="{{ url_for('index') }}" class="logo">ATHLETE VISION</a>
+        <nav class="nav-links">
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}" class="btn" style="color:white; margin-left:1rem;">Sign Up</a>
+        </nav>
+    </header>
+
+    <main>
+    {% endif %}
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div style="background: var(--accent-cyan); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; text-align: center; font-weight: 600;">
+                  {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+
+    {% if current_user.is_authenticated %}
+        </div>
+    </div>
+    {% else %}
+    </main>
+
+    <footer style="background: #f1f5f9; border-top: 1px solid rgba(22, 163, 74, 0.1); padding: 2.5rem 5%; margin-top: auto;">
+        <div style="max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+            <div>
+                <a href="/" style="font-weight: 800; font-size: 1.1rem; letter-spacing: 2px; text-transform: uppercase; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none;">ATHLETE VISION</a>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.4rem;">&copy; 2026 Athlete Vision. AI-Powered Biomechanics.</p>
+            </div>
+            <div style="display: flex; gap: 2rem; align-items: center;">
+                <a href="#" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: color 0.3s;" onmouseover="this.style.color='var(--accent-cyan)'" onmouseout="this.style.color='var(--text-muted)'">Privacy</a>
+                <a href="#" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: color 0.3s;" onmouseover="this.style.color='var(--accent-cyan)'" onmouseout="this.style.color='var(--text-muted)'">Terms</a>
+                <a href="#" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: color 0.3s;" onmouseover="this.style.color='var(--accent-cyan)'" onmouseout="this.style.color='var(--text-muted)'">Contact</a>
+            </div>
+        </div>
+    </footer>
+    {% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>
