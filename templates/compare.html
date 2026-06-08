@@ -1,0 +1,758 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* ═══════ COMPARE PAGE PREMIUM STYLES ═══════ */
+    .compare-hero {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 2.5rem; padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, rgba(22,163,74,0.08) 0%, rgba(5,150,105,0.04) 100%);
+        border-radius: 16px; border: 1px solid rgba(22,163,74,0.15);
+    }
+    .compare-hero h2 {
+        font-size: 1.6rem; font-weight: 800;
+        background: linear-gradient(135deg, #16a34a, #059669);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin-bottom: 0.25rem;
+    }
+    .compare-hero p { color: var(--text-muted); font-size: 0.9rem; }
+    
+    /* Session Cards */
+    .session-card {
+        text-align: center; border-radius: 16px; overflow: hidden;
+        background: var(--card-bg, rgba(255,255,255,0.03));
+        border: 1px solid var(--border);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+    }
+    .session-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(22,163,74,0.12);
+    }
+    .session-card .session-header {
+        padding: 1rem 1.5rem; font-weight: 700; font-size: 1.15rem; letter-spacing: 0.5px;
+    }
+    .session-card.session-a .session-header {
+        background: linear-gradient(135deg, rgba(22,163,74,0.15), rgba(22,163,74,0.05));
+        color: #16a34a; border-bottom: 2px solid rgba(22,163,74,0.2);
+    }
+    .session-card.session-b .session-header {
+        background: linear-gradient(135deg, rgba(5,150,105,0.15), rgba(5,150,105,0.05));
+        color: #059669; border-bottom: 2px solid rgba(5,150,105,0.2);
+    }
+    .session-card .video-box {
+        padding: 1rem 1.5rem; position: relative;
+    }
+    .session-card video {
+        width: 100%; max-height: 420px; border-radius: 12px;
+        object-fit: contain; display: block; margin: 0 auto;
+        background: #000; border: 1px solid rgba(255,255,255,0.06);
+    }
+    .session-card .snapshot-box {
+        padding: 0 1.5rem 1.5rem;
+    }
+    .session-card .snapshot-box img {
+        width: 100%; border-radius: 10px; border: 2px solid var(--border);
+    }
+    .session-card .flaw-badge {
+        display: inline-flex; align-items: center; gap: 0.35rem;
+        padding: 0.4rem 1rem; border-radius: 99px; font-size: 0.85rem; font-weight: 600;
+        margin-top: 0.75rem;
+    }
+    .session-card .no-flaw {
+        background: rgba(22,163,74,0.1); color: #16a34a;
+    }
+    .session-card .has-flaw {
+        background: rgba(239,68,68,0.1); color: #ef4444;
+    }
+
+    /* ═══════ KINETIC ANALYSIS SECTION ═══════ */
+    .kinetic-section {
+        border-radius: 20px; overflow: hidden;
+        background: var(--card-bg, rgba(255,255,255,0.03));
+        border: 1px solid var(--border);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    }
+    .kinetic-header {
+        padding: 2rem 2.5rem 1.5rem;
+        background: linear-gradient(135deg, rgba(22,163,74,0.1) 0%, rgba(5,150,105,0.04) 100%);
+        border-bottom: 1px solid var(--border);
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+    }
+    .kinetic-header h3 {
+        font-size: 1.4rem; font-weight: 800; margin: 0;
+        background: linear-gradient(135deg, #16a34a, #059669);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .kinetic-header .overall-badge {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        padding: 0.5rem 1.25rem; border-radius: 99px; font-weight: 700; font-size: 0.95rem;
+    }
+    .kinetic-header .badge-up {
+        background: rgba(22,163,74,0.15); color: #16a34a;
+        border: 1px solid rgba(22,163,74,0.25);
+    }
+    .kinetic-header .badge-down {
+        background: rgba(239,68,68,0.12); color: #ef4444;
+        border: 1px solid rgba(239,68,68,0.2);
+    }
+    .kinetic-header .badge-flat {
+        background: rgba(156,163,175,0.12); color: #9ca3af;
+        border: 1px solid rgba(156,163,175,0.2);
+    }
+    .kinetic-body { padding: 1.25rem 1.75rem; }
+
+    /* Joint Row */
+    .joint-row {
+        padding: 0.85rem 1rem; margin-bottom: 0.75rem; border-radius: 10px;
+        background: rgba(22,163,74,0.02);
+        border: 1px solid rgba(22,163,74,0.08);
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .joint-row:hover {
+        background: rgba(22,163,74,0.04);
+        box-shadow: 0 2px 12px rgba(22,163,74,0.06);
+    }
+    .joint-row:last-child { margin-bottom: 0; }
+    .joint-title {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .joint-title .name {
+        font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 0.35rem;
+        color: var(--text-main);
+    }
+    .joint-title .delta {
+        font-size: 0.78rem; font-weight: 800; padding: 0.2rem 0.6rem;
+        border-radius: 99px; letter-spacing: 0.3px;
+    }
+    .delta-up { background: rgba(22,163,74,0.12); color: #16a34a; }
+    .delta-down { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .delta-flat { background: rgba(156,163,175,0.1); color: #9ca3af; }
+
+    /* Progress Bars */
+    .bar-group { margin-bottom: 0.35rem; }
+    .bar-group:last-child { margin-bottom: 0; }
+    .bar-label {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 0.15rem;
+    }
+    .bar-label .session-name {
+        font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px;
+        width: 65px;
+    }
+    .bar-label .bar-value {
+        font-size: 0.72rem; font-weight: 700; min-width: 32px; text-align: right;
+    }
+    .bar-track {
+        height: 10px; border-radius: 5px; overflow: hidden; position: relative;
+        background: rgba(0,0,0,0.06);
+    }
+    .bar-fill {
+        height: 100%; border-radius: 5px; transition: width 1.5s cubic-bezier(0.25,0.8,0.25,1);
+        position: relative; min-width: 3px;
+    }
+    .bar-fill::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent 50%, rgba(255,255,255,0.15) 100%);
+        border-radius: inherit;
+    }
+    .bar-fill.bar-a {
+        background: linear-gradient(90deg, #16a34a, #22c55e);
+    }
+    .bar-fill.bar-b {
+        background: linear-gradient(90deg, #059669, #10b981);
+    }
+
+    /* Score Circles */
+    .score-circles-row {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .score-circle-card {
+        text-align: center; padding: 1.5rem 1rem; border-radius: 16px;
+        background: rgba(22,163,74,0.03); border: 1px solid rgba(22,163,74,0.1);
+        transition: transform 0.3s ease;
+    }
+    .score-circle-card:hover { transform: scale(1.03); }
+    .score-circle-card .circle-label {
+        font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; margin-bottom: 0.75rem;
+        color: var(--text-muted);
+    }
+    .circle-wrap {
+        width: 90px; height: 90px; margin: 0 auto 0.5rem; position: relative;
+    }
+    .circle-wrap svg { transform: rotate(-90deg); }
+    .circle-bg { fill: none; stroke: rgba(0,0,0,0.06); stroke-width: 6; }
+    .circle-fill {
+        fill: none; stroke-width: 6; stroke-linecap: round;
+        transition: stroke-dashoffset 1.5s cubic-bezier(0.25,0.8,0.25,1);
+    }
+    .circle-fill.fill-a { stroke: #16a34a; }
+    .circle-fill.fill-b { stroke: #059669; }
+    .circle-value {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        font-size: 0.95rem; font-weight: 800;
+    }
+    .circle-sessions {
+        display: flex; justify-content: center; gap: 1rem; margin-top: 0.5rem; font-size: 0.78rem;
+    }
+    .circle-sessions span { font-weight: 600; }
+
+    /* Overall Result Box */
+    .result-box {
+        padding: 1.75rem 2rem; border-radius: 16px; margin-top: 2rem;
+        display: flex; align-items: flex-start; gap: 1rem;
+        border: 1px solid var(--border);
+    }
+    .result-box.result-up {
+        background: linear-gradient(135deg, rgba(22,163,74,0.08), rgba(22,163,74,0.02));
+        border-color: rgba(22,163,74,0.2);
+    }
+    .result-box.result-down {
+        background: linear-gradient(135deg, rgba(239,68,68,0.06), rgba(239,68,68,0.01));
+        border-color: rgba(239,68,68,0.15);
+    }
+    .result-box.result-flat {
+        background: rgba(156,163,175,0.05);
+        border-color: rgba(156,163,175,0.15);
+    }
+    .result-icon {
+        width: 48px; height: 48px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; flex-shrink: 0;
+    }
+    .result-up .result-icon { background: rgba(22,163,74,0.15); }
+    .result-down .result-icon { background: rgba(239,68,68,0.12); }
+    .result-flat .result-icon { background: rgba(156,163,175,0.1); }
+    .result-box .result-text h4 {
+        margin: 0 0 0.35rem 0; font-size: 1.1rem; font-weight: 700;
+    }
+    .result-box .result-text p {
+        margin: 0; color: var(--text-muted); line-height: 1.6; font-size: 0.95rem;
+    }
+
+    /* Session Summary Stats */
+    .session-stats-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;
+    }
+    .session-stats-card {
+        border-radius: 14px; padding: 1.25rem 1.5rem; border: 1px solid var(--border);
+        background: var(--card-bg, rgba(255,255,255,0.03));
+    }
+    .session-stats-card h4 {
+        font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; margin: 0 0 1rem 0; padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .session-stats-card.stat-a h4 { color: #16a34a; }
+    .session-stats-card.stat-b h4 { color: #059669; }
+    .stat-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0.4rem 0; font-size: 0.9rem;
+    }
+    .stat-row .stat-label { color: var(--text-muted); }
+    .stat-row .stat-val { font-weight: 700; color: var(--text-main); }
+
+    /* Drill Recommendation Card */
+    .drill-section {
+        margin-top: 2rem; padding: 2rem 2.5rem;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(22,163,74,0.06) 0%, rgba(5,150,105,0.02) 100%);
+        border: 1px solid rgba(22,163,74,0.12);
+    }
+    .drill-section h4 {
+        font-size: 1.15rem; font-weight: 800; margin: 0 0 1.25rem 0;
+        color: #16a34a;
+    }
+    .drill-card {
+        display: flex; gap: 1.5rem; padding: 1.25rem; border-radius: 14px;
+        background: var(--card-bg-solid, #ffffff); border: 1px solid var(--border);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.06); align-items: center; flex-wrap: wrap;
+    }
+    .drill-card .drill-thumb {
+        position: relative; width: 280px; height: 175px; border-radius: 10px;
+        overflow: hidden; flex-shrink: 0; cursor: pointer; border: 2px solid #16a34a;
+    }
+    .drill-card .drill-thumb img {
+        width: 100%; height: 100%; object-fit: cover; opacity: 0.85;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .drill-card .drill-thumb:hover img { transform: scale(1.05); opacity: 1; }
+    .drill-card .drill-thumb .play-btn {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 44px; height: 44px; border-radius: 50%;
+        background: rgba(22,163,74,0.9); display: flex; align-items: center;
+        justify-content: center; box-shadow: 0 3px 12px rgba(22,163,74,0.5);
+        transition: transform 0.2s ease;
+    }
+    .drill-card .drill-thumb:hover .play-btn { transform: translate(-50%, -50%) scale(1.1); }
+    .drill-card .drill-thumb .play-btn span {
+        color: white; font-size: 18px; margin-left: 3px;
+    }
+    .drill-info { flex-grow: 1; }
+    .drill-info h5 {
+        color: #16a34a; margin: 0 0 0.5rem 0; font-size: 1.1rem; font-weight: 700;
+    }
+    .drill-info p {
+        margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-muted); line-height: 1.5;
+    }
+    .drill-tip {
+        background: rgba(22,163,74,0.06); padding: 0.55rem 0.9rem;
+        border-radius: 8px; border-left: 3px solid #16a34a;
+        display: inline-block; font-size: 0.85rem; color: #16a34a; font-weight: 500;
+    }
+    .drill-yt-link {
+        display: inline-flex; align-items: center; gap: 0.75rem;
+        padding: 0.7rem 1.25rem; border-radius: 12px;
+        background: linear-gradient(135deg, #ff0000, #cc0000);
+        color: white; text-decoration: none; font-weight: 700; font-size: 0.9rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        box-shadow: 0 3px 12px rgba(255,0,0,0.2);
+        flex-shrink: 0; margin-bottom: 0.25rem;
+    }
+    .drill-yt-link:hover {
+        transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,0,0,0.3);
+    }
+    .drill-yt-icon {
+        width: 36px; height: 36px; border-radius: 8px;
+        background: rgba(255,255,255,0.2);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+
+    /* Animate bars on load */
+    @keyframes barGrow { from { width: 0; } }
+    .bar-fill { animation: barGrow 1.5s cubic-bezier(0.25,0.8,0.25,1) forwards; }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+        animation: fadeUp 0.6s ease forwards;
+        opacity: 0;
+    }
+    .animate-in:nth-child(1) { animation-delay: 0.1s; }
+    .animate-in:nth-child(2) { animation-delay: 0.2s; }
+    .animate-in:nth-child(3) { animation-delay: 0.3s; }
+</style>
+
+<div class="fade-in">
+
+    <!-- ═══════ HERO HEADER ═══════ -->
+    <div class="compare-hero">
+        <div>
+            <h2>⚡ Advanced Comparison</h2>
+            <p>Comparing {{ r1.filename }} vs {{ r2.filename }}</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn">&larr; Back to Dashboard</a>
+    </div>
+
+    <!-- ═══════ VIDEO & SNAPSHOT ROW ═══════ -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
+
+        <!-- Session A -->
+        <div class="session-card session-a animate-in">
+            <div class="session-header">🅰️ Session A — {{ r1.upload_date.strftime('%b %d, %Y') }}</div>
+            <div class="video-box">
+                <video controls preload="metadata" id="videoA">
+                    <source src="{{ url_for('serve_uploaded_video', filename=r1.filename) }}" type="video/mp4">
+                    {% if r1.processed_video_path %}
+                        {% for part in r1.processed_video_path.split('|') %}
+                            {% if part and not part.isdigit() %}
+                                <source src="{{ url_for('serve_processed_video', filename=part) }}" type="video/mp4">
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="snapshot-box">
+                {% if r1.snapshot_path %}
+                    <img src="{{ url_for('serve_processed_video', filename=r1.snapshot_path) }}" alt="Pose A">
+                    {% if r1.worst_timestamp %}
+                        <span class="flaw-badge has-flaw">⏱️ Flaw detected at {{ r1.worst_timestamp }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="flaw-badge no-flaw">✅ No alignment flaw detected</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Session B -->
+        <div class="session-card session-b animate-in">
+            <div class="session-header">🅱️ Session B — {{ r2.upload_date.strftime('%b %d, %Y') }}</div>
+            <div class="video-box">
+                <video controls preload="metadata" id="videoB">
+                    <source src="{{ url_for('serve_uploaded_video', filename=r2.filename) }}" type="video/mp4">
+                    {% if r2.processed_video_path %}
+                        {% for part in r2.processed_video_path.split('|') %}
+                            {% if part and not part.isdigit() %}
+                                <source src="{{ url_for('serve_processed_video', filename=part) }}" type="video/mp4">
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            <div class="snapshot-box">
+                {% if r2.snapshot_path %}
+                    <img src="{{ url_for('serve_processed_video', filename=r2.snapshot_path) }}" alt="Pose B">
+                    {% if r2.worst_timestamp %}
+                        <span class="flaw-badge has-flaw">⏱️ Flaw detected at {{ r2.worst_timestamp }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="flaw-badge no-flaw">✅ No alignment flaw detected</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% set arm_dif = (r2.arm_score or 0) - (r1.arm_score or 0) %}
+    {% set hip_dif = (r2.hip_score or 0) - (r1.hip_score or 0) %}
+    {% set knee_dif = (r2.knee_score or 0) - (r1.knee_score or 0) %}
+    {% set total_dif_avg = (arm_dif + hip_dif + knee_dif) / 3 %}
+    {% set avg_a = ((r1.arm_score or 0) + (r1.hip_score or 0) + (r1.knee_score or 0)) / 3 %}
+    {% set avg_b = ((r2.arm_score or 0) + (r2.hip_score or 0) + (r2.knee_score or 0)) / 3 %}
+
+    <!-- ═══════ SESSION SUMMARY STATS ═══════ -->
+    <div class="session-stats-grid">
+        <div class="session-stats-card stat-a animate-in">
+            <h4>🅰️ Session A Summary</h4>
+            <div class="stat-row">
+                <span class="stat-label">Arm Extension</span>
+                <span class="stat-val">{{ r1.arm_score or 0 }}%</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Core Pivot</span>
+                <span class="stat-val">{{ r1.hip_score or 0 }}%</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Knee Bend</span>
+                <span class="stat-val">{{ r1.knee_score or 0 }}%</span>
+            </div>
+            <div class="stat-row" style="border-top: 1px solid var(--border); padding-top: 0.6rem; margin-top: 0.4rem;">
+                <span class="stat-label" style="font-weight: 700;">Average Score</span>
+                <span class="stat-val" style="color: #16a34a; font-size: 1.05rem;">{{ "%.0f"|format(avg_a) }}%</span>
+            </div>
+        </div>
+        <div class="session-stats-card stat-b animate-in">
+            <h4>🅱️ Session B Summary</h4>
+            <div class="stat-row">
+                <span class="stat-label">Arm Extension</span>
+                <span class="stat-val">{{ r2.arm_score or 0 }}%</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Core Pivot</span>
+                <span class="stat-val">{{ r2.hip_score or 0 }}%</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Knee Bend</span>
+                <span class="stat-val">{{ r2.knee_score or 0 }}%</span>
+            </div>
+            <div class="stat-row" style="border-top: 1px solid var(--border); padding-top: 0.6rem; margin-top: 0.4rem;">
+                <span class="stat-label" style="font-weight: 700;">Average Score</span>
+                <span class="stat-val" style="color: #059669; font-size: 1.05rem;">{{ "%.0f"|format(avg_b) }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ SCORE CIRCLES ═══════ -->
+    <div class="score-circles-row">
+        {% set circ = 251.33 %}
+        <!-- Arm Circle -->
+        <div class="score-circle-card animate-in">
+            <div class="circle-label">💪 Arm Extension</div>
+            <div class="circle-wrap">
+                <svg width="90" height="90" viewBox="0 0 90 90">
+                    <circle cx="45" cy="45" r="40" class="circle-bg"/>
+                    <circle cx="45" cy="45" r="40" class="circle-fill fill-a"
+                        stroke-dasharray="{{ circ }}"
+                        stroke-dashoffset="{{ circ - (circ * (r1.arm_score or 0) / 100) }}"/>
+                    <circle cx="45" cy="45" r="34" class="circle-bg"/>
+                    <circle cx="45" cy="45" r="34" class="circle-fill fill-b"
+                        stroke-dasharray="{{ 213.63 }}"
+                        stroke-dashoffset="{{ 213.63 - (213.63 * (r2.arm_score or 0) / 100) }}"/>
+                </svg>
+                <div class="circle-value">
+                    {% if arm_dif > 0 %}<span style="color:#16a34a">+{{ "%.0f"|format(arm_dif) }}%</span>
+                    {% elif arm_dif < 0 %}<span style="color:#ef4444">{{ "%.0f"|format(arm_dif) }}%</span>
+                    {% else %}<span style="color:#9ca3af">0%</span>{% endif %}
+                </div>
+            </div>
+            <div class="circle-sessions">
+                <span style="color:#16a34a">A: {{ r1.arm_score or 0 }}%</span>
+                <span style="color:#059669">B: {{ r2.arm_score or 0 }}%</span>
+            </div>
+        </div>
+        <!-- Core Circle -->
+        <div class="score-circle-card animate-in">
+            <div class="circle-label">🔄 Core Pivot</div>
+            <div class="circle-wrap">
+                <svg width="90" height="90" viewBox="0 0 90 90">
+                    <circle cx="45" cy="45" r="40" class="circle-bg"/>
+                    <circle cx="45" cy="45" r="40" class="circle-fill fill-a"
+                        stroke-dasharray="{{ circ }}"
+                        stroke-dashoffset="{{ circ - (circ * (r1.hip_score or 0) / 100) }}"/>
+                    <circle cx="45" cy="45" r="34" class="circle-bg"/>
+                    <circle cx="45" cy="45" r="34" class="circle-fill fill-b"
+                        stroke-dasharray="{{ 213.63 }}"
+                        stroke-dashoffset="{{ 213.63 - (213.63 * (r2.hip_score or 0) / 100) }}"/>
+                </svg>
+                <div class="circle-value">
+                    {% if hip_dif > 0 %}<span style="color:#16a34a">+{{ "%.0f"|format(hip_dif) }}%</span>
+                    {% elif hip_dif < 0 %}<span style="color:#ef4444">{{ "%.0f"|format(hip_dif) }}%</span>
+                    {% else %}<span style="color:#9ca3af">0%</span>{% endif %}
+                </div>
+            </div>
+            <div class="circle-sessions">
+                <span style="color:#16a34a">A: {{ r1.hip_score or 0 }}%</span>
+                <span style="color:#059669">B: {{ r2.hip_score or 0 }}%</span>
+            </div>
+        </div>
+        <!-- Knee Circle -->
+        <div class="score-circle-card animate-in">
+            <div class="circle-label">🦵 Knee Bend</div>
+            <div class="circle-wrap">
+                <svg width="90" height="90" viewBox="0 0 90 90">
+                    <circle cx="45" cy="45" r="40" class="circle-bg"/>
+                    <circle cx="45" cy="45" r="40" class="circle-fill fill-a"
+                        stroke-dasharray="{{ circ }}"
+                        stroke-dashoffset="{{ circ - (circ * (r1.knee_score or 0) / 100) }}"/>
+                    <circle cx="45" cy="45" r="34" class="circle-bg"/>
+                    <circle cx="45" cy="45" r="34" class="circle-fill fill-b"
+                        stroke-dasharray="{{ 213.63 }}"
+                        stroke-dashoffset="{{ 213.63 - (213.63 * (r2.knee_score or 0) / 100) }}"/>
+                </svg>
+                <div class="circle-value">
+                    {% if knee_dif > 0 %}<span style="color:#16a34a">+{{ "%.0f"|format(knee_dif) }}%</span>
+                    {% elif knee_dif < 0 %}<span style="color:#ef4444">{{ "%.0f"|format(knee_dif) }}%</span>
+                    {% else %}<span style="color:#9ca3af">0%</span>{% endif %}
+                </div>
+            </div>
+            <div class="circle-sessions">
+                <span style="color:#16a34a">A: {{ r1.knee_score or 0 }}%</span>
+                <span style="color:#059669">B: {{ r2.knee_score or 0 }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ KINETIC JOINT ANALYSIS ═══════ -->
+    <div class="kinetic-section animate-in">
+        <div class="kinetic-header">
+            <h3>📊 Kinetic Joint Analysis</h3>
+            <div class="overall-badge {% if total_dif_avg > 0 %}badge-up{% elif total_dif_avg < 0 %}badge-down{% else %}badge-flat{% endif %}">
+                {% if total_dif_avg > 0 %}📈 +{{ "%.1f"|format(total_dif_avg) }}% Overall
+                {% elif total_dif_avg < 0 %}📉 {{ "%.1f"|format(total_dif_avg) }}% Overall
+                {% else %}➡️ No Change{% endif %}
+            </div>
+        </div>
+        <div class="kinetic-body">
+
+            <!-- Arm Extension -->
+            <div class="joint-row">
+                <div class="joint-title">
+                    <span class="name">💪 Arm Extension</span>
+                    <span class="delta {% if arm_dif > 0 %}delta-up{% elif arm_dif < 0 %}delta-down{% else %}delta-flat{% endif %}">
+                        {% if arm_dif > 0 %}+{% endif %}{{ "%.1f"|format(arm_dif) }}%
+                    </span>
+                </div>
+                <div class="bar-group">
+                    <div class="bar-label">
+                        <span class="session-name" style="color: #16a34a;">Session A</span>
+                        <span class="bar-value" style="color: #16a34a;">{{ r1.arm_score or 0 }}%</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-a" style="width: {{ r1.arm_score or 0 }}%;"></div>
+                    </div>
+                </div>
+                <div class="bar-group">
+                    <div class="bar-label">
+                        <span class="session-name" style="color: #059669;">Session B</span>
+                        <span class="bar-value" style="color: #059669;">{{ r2.arm_score or 0 }}%</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-b" style="width: {{ r2.arm_score or 0 }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Core Pivot -->
+            <div class="joint-row">
+                <div class="joint-title">
+                    <span class="name">🔄 Core Pivot</span>
+                    <span class="delta {% if hip_dif > 0 %}delta-up{% elif hip_dif < 0 %}delta-down{% else %}delta-flat{% endif %}">
+                        {% if hip_dif > 0 %}+{% endif %}{{ "%.1f"|format(hip_dif) }}%
+                    </span>
+                </div>
+                <div class="bar-group">
+                    <div class="bar-label">
+                        <span class="session-name" style="color: #16a34a;">Session A</span>
+                        <span class="bar-value" style="color: #16a34a;">{{ r1.hip_score or 0 }}%</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-a" style="width: {{ r1.hip_score or 0 }}%;"></div>
+                    </div>
+                </div>
+                <div class="bar-group">
+                    <div class="bar-label">
+                        <span class="session-name" style="color: #059669;">Session B</span>
+                        <span class="bar-value" style="color: #059669;">{{ r2.hip_score or 0 }}%</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-b" style="width: {{ r2.hip_score or 0 }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Knee Bend -->
+            <div class="joint-row">
+                <div class="joint-title">
+                    <span class="name">🦵 Knee Bend</span>
+                    <span class="delta {% if knee_dif > 0 %}delta-up{% elif knee_dif < 0 %}delta-down{% else %}delta-flat{% endif %}">
+                        {% if knee_dif > 0 %}+{% endif %}{{ "%.1f"|format(knee_dif) }}%
+                    </span>
+                </div>
+                <div class="bar-group">
+                    <div class="bar-label">
+                        <span class="session-name" style="color: #16a34a;">Session A</span>
+                        <span class="bar-value" style="color: #16a34a;">{{ r1.knee_score or 0 }}%</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-a" style="width: {{ r1.knee_score or 0 }}%;"></div>
+                    </div>
+                </div>
+                <div class="bar-group">
+                    <div class="bar-label">
+                        <span class="session-name" style="color: #059669;">Session B</span>
+                        <span class="bar-value" style="color: #059669;">{{ r2.knee_score or 0 }}%</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill bar-b" style="width: {{ r2.knee_score or 0 }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Result -->
+            <div class="result-box {% if total_dif_avg > 0 %}result-up{% elif total_dif_avg < 0 %}result-down{% else %}result-flat{% endif %}">
+                <div class="result-icon">
+                    {% if total_dif_avg > 5 %}🚀
+                    {% elif total_dif_avg > 0 %}📈
+                    {% elif total_dif_avg == 0 %}⚖️
+                    {% elif total_dif_avg > -5 %}📉
+                    {% else %}⚠️{% endif %}
+                </div>
+                <div class="result-text">
+                    {% if total_dif_avg > 5 %}
+                        <h4 style="color: #16a34a;">Big Improvement!</h4>
+                        <p>Excellent work! Your body posture improved significantly by <strong>+{{ "%.1f"|format(total_dif_avg) }}%</strong>. Your training is paying off — keep this momentum going!</p>
+                    {% elif total_dif_avg > 0 %}
+                        <h4 style="color: #16a34a;">Slight Improvement</h4>
+                        <p>You're getting better (+{{ "%.1f"|format(total_dif_avg) }}%). Keep doing your training drills consistently to see bigger gains!</p>
+                    {% elif total_dif_avg == 0 %}
+                        <h4 style="color: #9ca3af;">No Change</h4>
+                        <p>Your score is exactly the same. You might need to push harder or try different training drills to break through this plateau.</p>
+                    {% elif total_dif_avg < -5 %}
+                        <h4 style="color: #ef4444;">Needs Attention</h4>
+                        <p>Your posture dropped by <strong>{{ "%.1f"|format(total_dif_avg|abs) }}%</strong>. This could be due to fatigue or skipping warm-ups. Focus on the drill below!</p>
+                    {% else %}
+                        <h4 style="color: #ef4444;">Small Drop</h4>
+                        <p>You did slightly worse (-{{ "%.1f"|format(total_dif_avg|abs) }}%) this time. Remember to do a full warm-up before you play!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ DRILL RECOMMENDATION ═══════ -->
+    <div class="drill-section animate-in">
+        <h4>📋 Recommended Training Drill</h4>
+        <div class="drill-card">
+            {% if arm_dif <= hip_dif and arm_dif <= knee_dif %}
+                {% if arm_dif < 0 %}
+                    <a href="https://www.youtube.com/results?search_query=badminton+arm+extension+drill+band+pull" target="_blank" rel="noopener noreferrer" class="drill-yt-link">
+                        <div class="drill-yt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg></div>
+                        <span>Watch on YouTube ↗</span>
+                    </a>
+                    <div class="drill-info">
+                        <h5>🏸 Video Drill: Band Pull Extension</h5>
+                        <p>Hold a rubber exercise band and pull it straight up over your head (15 times). This strengthens the arm extension muscles critical for powerful smashes and clears.</p>
+                        <div class="drill-tip">💡 Tip: Keep your arm super straight. Do not bend your elbow at the top!</div>
+                    </div>
+                {% else %}
+                    <a href="https://www.youtube.com/results?search_query=badminton+shadow+swing+drill+technique" target="_blank" rel="noopener noreferrer" class="drill-yt-link">
+                        <div class="drill-yt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg></div>
+                        <span>Watch on YouTube ↗</span>
+                    </a>
+                    <div class="drill-info">
+                        <h5>🏸 Video Drill: Fast Shadow Swing</h5>
+                        <p>Swing your racket very fast without hitting a shuttle (20 times). This builds muscle memory for a clean, explosive arm motion.</p>
+                        <div class="drill-tip">💡 Tip: Make sure to snap your arm completely straight at the very top of your swing.</div>
+                    </div>
+                {% endif %}
+            {% elif hip_dif <= arm_dif and hip_dif <= knee_dif %}
+                {% if hip_dif < 0 %}
+                    <a href="https://www.youtube.com/results?search_query=badminton+torso+rotation+drill+core+twist" target="_blank" rel="noopener noreferrer" class="drill-yt-link">
+                        <div class="drill-yt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg></div>
+                        <span>Watch on YouTube ↗</span>
+                    </a>
+                    <div class="drill-info">
+                        <h5>🏸 Video Drill: Med Ball Torso Twist</h5>
+                        <p>Hold a heavy ball and twist your body side to side (15 times). This improves your core rotation for more power in every shot.</p>
+                        <div class="drill-tip">💡 Tip: Don't just use your arm to hit! You need to turn your stomach and hips too.</div>
+                    </div>
+                {% else %}
+                    <a href="https://www.youtube.com/results?search_query=badminton+power+wall+throw+drill+hip+rotation" target="_blank" rel="noopener noreferrer" class="drill-yt-link">
+                        <div class="drill-yt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg></div>
+                        <span>Watch on YouTube ↗</span>
+                    </a>
+                    <div class="drill-info">
+                        <h5>🏸 Video Drill: Power Wall Throw</h5>
+                        <p>Stand far away and throw a ball against a wall fast. This develops explosive hip and core power.</p>
+                        <div class="drill-tip">💡 Tip: Remember to turn your hips forward first, then follow with your arm.</div>
+                    </div>
+                {% endif %}
+            {% else %}
+                {% if knee_dif < 0 %}
+                    <a href="https://www.youtube.com/results?search_query=badminton+court+lunge+drill+footwork" target="_blank" rel="noopener noreferrer" class="drill-yt-link">
+                        <div class="drill-yt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg></div>
+                        <span>Watch on YouTube ↗</span>
+                    </a>
+                    <div class="drill-info">
+                        <h5>🏸 Video Drill: Court Lunges</h5>
+                        <p>Do 10 deep lunges (take a big step forward and bend down). This strengthens your legs for better court coverage.</p>
+                        <div class="drill-tip">💡 Tip: You are standing too tall and straight. Bend down low like a spring!</div>
+                    </div>
+                {% else %}
+                    <a href="https://www.youtube.com/results?search_query=badminton+explosive+court+jumps+leg+power" target="_blank" rel="noopener noreferrer" class="drill-yt-link">
+                        <div class="drill-yt-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M10 15l5.19-3L10 9v6m11.56-7.83c.13.47.22 1.1.28 1.9.07.8.1 1.49.1 2.09L22 12c0 2.19-.16 3.8-.44 4.83-.25.9-.83 1.48-1.73 1.73-.47.13-1.33.22-2.65.28-1.3.07-2.49.1-3.59.1L12 19c-4.19 0-6.8-.16-7.83-.44-.9-.25-1.48-.83-1.73-1.73-.13-.47-.22-1.1-.28-1.9-.07-.8-.1-1.49-.1-2.09L2 12c0-2.19.16-3.8.44-4.83.25-.9.83-1.48 1.73-1.73.47-.13 1.33-.22 2.65-.28 1.3-.07 2.49-.1 3.59-.1L12 5c4.19 0 6.8.16 7.83.44.9.25 1.48.83 1.73 1.73z"/></svg></div>
+                        <span>Watch on YouTube ↗</span>
+                    </a>
+                    <div class="drill-info">
+                        <h5>🏸 Video Drill: Explosive Court Jumps</h5>
+                        <p>Do 10 big jumps on the court. This builds explosive leg power for quick recoveries and lunges.</p>
+                        <div class="drill-tip">💡 Tip: Jump high, but land softly with your knees bent so you don't hurt them.</div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Fallback: if video fails to load from uploads, try processed folder
+document.querySelectorAll('video').forEach(v => {
+    v.addEventListener('error', function() {
+        const sources = this.querySelectorAll('source');
+        if (sources.length > 1) {
+            // Remove the failed source and try next
+            sources[0].remove();
+            this.load();
+        }
+    }, true);
+});
+</script>
+
+{% endblock %}
